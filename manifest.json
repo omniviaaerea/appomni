@@ -2,15 +2,15 @@
   "id": "/",
   "name": "OMNI · Registro de Intubação",
   "short_name": "OMNI Via Aérea",
-  "description": "Checklist de intubação, doses da ISR, fluxogramas TDAC e evolução dos seus resultados.",
+  "description": "Checklist de intubação, doses da ISR, algoritmos TDAC, ventilação mecânica e evolução dos seus resultados.",
   "lang": "pt-BR",
   "dir": "ltr",
   "display": "standalone",
   "orientation": "any",
   "start_url": "./",
   "scope": "./",
-  "theme_color": "#20204A",
-  "background_color": "#FFFFFF",
+  "theme_color": "#06203F",
+  "background_color": "#06203F",
   "categories": [
     "medical",
     "education"

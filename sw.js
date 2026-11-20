@@ -1,7 +1,7 @@
-const CACHE = 'omni-iot-v13';
+const CACHE = 'omni-iot-v20';
 const PRECACHE = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png',
   'supabase.js', 'config.js',
-  'flow-universal.jpg', 'flow-difficult.jpg', 'flow-failed.jpg', 'flow-cardiac.jpg'];
+  'flow-universal.webp', 'flow-difficult.webp', 'flow-failed.webp', 'flow-cardiac.webp'];
 // sempre buscar primeiro na rede (cai para o cache sem internet)
 const NETWORK_FIRST = ['config.js', 'admin.html'];
 
