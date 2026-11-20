@@ -128,6 +128,7 @@
     <nav class="tabs" id="tabs">
       <button data-t="geral" class="on">Visão geral</button>
       <button data-t="registros">Registros</button>
+      <button data-t="evolucao">Evolução</button>
       <button data-t="uso">Histórico de uso</button>
       <button data-t="usuarios">Usuários</button>
     </nav>
@@ -145,6 +146,40 @@
       </div>
       <p class="count" id="regCount"></p>
       <div class="tw"><table><thead><tr><th>Data</th><th>Médico</th><th>Paciente</th><th>Idade/Sexo</th><th>Hospital · setor</th><th>Via aérea</th><th>Desfecho</th><th>Checklist</th><th>Alertas</th></tr></thead><tbody id="regBody"></tbody></table></div>
+    </section>
+    <section id="t-evolucao" class="hidden">
+      <div class="evo-pick"><div class="field"><label>Médico</label><select id="evoMed"></select></div><div class="evo-who" id="evoWho"></div></div>
+
+  <p class="lead">Mesma tela de Evolução que o médico vê no app. Filtre e toque no período para recalcular.</p>
+  <details class="evf-box" id="evfBox">
+    <summary>🔍 Filtros <span id="evfCount"></span></summary>
+    <div class="evf-grid">
+      <div class="field"><label>Hospital</label><select class="evf" id="evF_hosp"><option value="">Todos</option></select></div>
+      <div class="field"><label>Setor</label><select class="evf" id="evF_setor"><option value="">Todos</option><option>PS (pronto-socorro)</option><option>CC (centro cirúrgico)</option><option>UTI</option><option>Enfermaria</option><option>Pré-hospitalar</option><option>Outro</option></select></div>
+      <div class="field"><label>Técnica</label><select class="evf" id="evF_tec"><option value="">Todas</option><option>Laringoscopia direta</option><option>Videolaringoscopia</option></select></div>
+      <div class="field"><label>Guia / adjunto</label><select class="evf" id="evF_guia"><option value="">Todos</option><option>Bougie</option><option>Fio-guia</option><option>Nenhum</option></select></div>
+      <div class="field"><label>Indutor</label><select class="evf" id="evF_ind"><option value="">Todos</option><option>Cetamina</option><option>Etomidato</option></select></div>
+      <div class="field"><label>Bloqueador</label><select class="evf" id="evF_bnm"><option value="">Todos</option><option>Succinilcolina</option><option>Rocurônio</option></select></div>
+      <div class="field" style="grid-column:1/-1"><label>Nº da tentativa</label><select class="evf" id="evF_via"><option value="">Todas</option><option>1ª tentativa</option><option>2ª tentativa (resgate)</option><option>3ª tentativa</option><option value="__outros">Outros (DEG / cirúrgica / falha)</option></select></div>
+    </div>
+    <button class="reset" id="evfClear" style="margin-top:4px">Limpar filtros</button>
+  </details>
+  <div class="kpis" id="evoCounts"></div>
+  <div class="seg" id="evoPeriod" style="margin:6px 0 14px">
+    <button class="chip" data-grp="evop" data-v="Semana">Semana</button><button class="chip sel" data-grp="evop" data-v="Mês">Mês</button><button class="chip" data-grp="evop" data-v="Ano">Ano</button><button class="chip" data-grp="evop" data-v="Tudo">Tudo</button>
+  </div>
+  <div class="kpis" id="evoRates"></div>
+  <h3 class="sec">Eventos adversos por tipo</h3>
+  <div class="formcard" id="chartAdv"></div>
+  <h3 class="sec">1ª tentativa por técnica e guia</h3>
+  <div class="formcard" id="chartCmp"></div>
+  <h3 class="sec">Intubações por mês</h3>
+  <div class="formcard" id="chartVol"></div>
+  <h3 class="sec">Sucesso na 1ª tentativa por mês (%)</h3>
+  <div class="formcard" id="chartFP"></div>
+  <h3 class="sec">Conquistas</h3>
+  <div class="badges" id="evoBadges"></div>
+  <p class="note" id="evoNote" style="margin:10px 4px 0"></p>
     </section>
     <section id="t-uso" class="hidden">
       <div class="card" style="margin-bottom:14px"><h3>Por usuário</h3>
@@ -262,7 +297,7 @@ function fillSelects(){
   ['fMed','uMed'].forEach(id=>{ const v=$(id).value; $(id).innerHTML=opts; $(id).value=v; });
   const tv=$('uTipo').value; $('uTipo').innerHTML='<option value="">Todos</option>'+Object.keys(EV).map(k=>`<option value="${k}">${EV[k]}</option>`).join(''); $('uTipo').value=tv;
 }
-function render(){ ({geral:renderGeral,registros:renderRegs,uso:renderUso,usuarios:renderUsers})[tab](); }
+function render(){ ({geral:renderGeral,registros:renderRegs,evolucao:()=>window.renderEvoAdmin&&window.renderEvoAdmin(),uso:renderUso,usuarios:renderUsers})[tab](); }
 
 /* ---------- visão geral ---------- */
 function bars(list,max){ max=max||Math.max(1,...list.map(x=>x[1]));
@@ -433,7 +468,7 @@ $('btnApp').onclick=()=>{ location.href='index.html'; };
 $('btnReload').onclick=()=>{ loadAll().then(()=>toast('Dados atualizados')); };
 $('tabs').onclick=e=>{ const b=e.target.closest('[data-t]'); if(!b) return; tab=b.dataset.t;
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
-  ['geral','registros','uso','usuarios'].forEach(t=>$('t-'+t).classList.toggle('hidden',t!==tab)); render(); };
+  ['geral','registros','evolucao','uso','usuarios'].forEach(t=>$('t-'+t).classList.toggle('hidden',t!==tab)); render(); };
 ['fBusca','fMed','fDe','fAte','fExc'].forEach(id=>$(id).addEventListener('input',renderRegs));
 ['uMed','uTipo','uDe','uAte'].forEach(id=>$(id).addEventListener('input',renderUso));
 $('pBusca').addEventListener('input',renderUsers);
@@ -465,6 +500,58 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySele
   .pw-eye svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .pw-eye .off{display:none} .pw-eye.on .on{display:none} .pw-eye.on .off{display:block}
   html[data-theme="dark"] .pw-eye{color:#9FB3CC}
+#t-evolucao .lead{font-size:13px;color:var(--muted);margin:10px 4px 16px;line-height:1.55}
+#t-evolucao .lead b{color:var(--teal-deep)}
+#t-evolucao h3.sec{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:22px 4px 10px;display:flex;align-items:center;gap:9px}
+#t-evolucao h3.sec::before, #t-evolucao h3.sec::after{content:"";height:1px;flex:1;background:var(--line)}
+#t-evolucao .formcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px}
+#t-evolucao .field{margin-bottom:12px}
+#t-evolucao .field:last-child{margin-bottom:0}
+#t-evolucao .field label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:5px;letter-spacing:.02em}
+#t-evolucao .field input, #t-evolucao .field select, #t-evolucao .field textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:15px;color:var(--ink);background:#fff;font-family:inherit}
+#t-evolucao .field input:focus, #t-evolucao .field select:focus, #t-evolucao .field textarea:focus{outline:none;border-color:var(--teal)}
+#t-evolucao .seg{display:flex;gap:7px;flex-wrap:wrap}
+#t-evolucao .chip{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:9px 13px;font-size:13.5px;font-weight:700;cursor:pointer;line-height:1.2}
+#t-evolucao .chip small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:1px}
+#t-evolucao .chip.sel{border-color:var(--teal);background:#D9EEFC;color:var(--teal-deep)}
+#t-evolucao .chip.sel small{color:var(--teal-deep)}
+#t-evolucao .empty{text-align:center;color:var(--muted);font-size:13px;padding:34px 16px;line-height:1.6}
+#t-evolucao .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:8px}
+#t-evolucao .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 13px}
+#t-evolucao .kpi .v{font-size:23px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1}
+#t-evolucao .kpi .l{font-size:11px;color:var(--muted);font-weight:600;margin-top:5px;letter-spacing:.02em}
+#t-evolucao .kpi.good .v{color:var(--green)}
+#t-evolucao .kpi.warn .v{color:var(--amber)}
+#t-evolucao .kpi.bad .v{color:var(--red)}
+#t-evolucao .badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+#t-evolucao .badge{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 8px;text-align:center}
+#t-evolucao .badge .bi{font-size:22px;line-height:1}
+#t-evolucao .badge .bt{font-size:10.5px;font-weight:700;color:var(--ink);margin-top:6px;line-height:1.25}
+#t-evolucao .badge .bs{font-size:9.5px;color:var(--muted);margin-top:2px}
+#t-evolucao .badge.locked{opacity:.38;filter:grayscale(1)}
+#t-evolucao .badge.earned{border-color:var(--teal);box-shadow:0 4px 14px -8px rgba(3,82,157,.6)}
+#t-evolucao .evf-box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:4px 14px;margin-bottom:14px}
+#t-evolucao .evf-box summary{cursor:pointer;font-weight:800;font-size:13.5px;color:var(--navy);padding:9px 0;list-style:none}
+#t-evolucao .evf-box summary::-webkit-details-marker{display:none}
+#t-evolucao .evf-box #evfCount{font-weight:700;font-size:11px;color:var(--teal-deep)}
+#t-evolucao .evf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px 0 8px}
+#t-evolucao .hbars{padding:4px 2px}
+#t-evolucao .hbar{display:grid;grid-template-columns:minmax(96px,38%) 1fr auto;gap:8px;align-items:center;padding:5px 0;font-size:11.5px}
+#t-evolucao .hbar .hl{color:var(--ink);font-weight:600;line-height:1.25}
+#t-evolucao .hbar .ht{background:var(--line);border-radius:99px;height:10px;overflow:hidden}
+#t-evolucao .hbar .hf{height:100%;border-radius:99px;background:var(--teal);min-width:2px}
+#t-evolucao .hbar.bad .hf{background:var(--red)}
+#t-evolucao .hbar .hn{color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+#t-evolucao .cmp-note{font-size:10.5px;color:var(--muted);margin:6px 2px 2px}
+#t-evolucao .chip{border-radius:999px}
+#t-evolucao{max-width:780px}
+#t-evolucao .formcard svg{max-width:520px;display:block;margin:0 auto}
+#t-evolucao #evoNote:empty{display:none}
+#t-evolucao .evo-pick{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+#t-evolucao .evo-pick .field{margin:0;flex:1 1 260px}
+#t-evolucao .evo-who{font-size:12.5px;color:var(--muted)}
+#t-evolucao .evo-who b{color:var(--ink)}
+
 </style>
 <script>/* olho para mostrar/ocultar a senha */
 (function(){
@@ -474,6 +561,178 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySele
     const w=document.createElement('span'); w.className='pw-wrap'; inp.parentNode.insertBefore(w,inp); w.appendChild(inp);
     const b=document.createElement('button'); b.type='button'; b.className='pw-eye'; b.setAttribute('aria-label','Mostrar senha'); b.innerHTML=EYE; w.appendChild(b);
     b.addEventListener('click',()=>{ const show=inp.type==='password'; inp.type=show?'text':'password'; b.classList.toggle('on',show); b.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha'); inp.focus(); });
+  });
+})();
+</script>
+
+<script>
+/* ---------- aba Evolução: mesma tela do app, para o médico escolhido ---------- */
+(function(){
+  let EVO_USER='';
+  function EVO_LIST(){ return R.filter(r=>!r.excluido_em&&(!EVO_USER||r.user_id===EVO_USER)&&r.dados).map(r=>Object.assign({},r.dados,{savedAt:r.dados.savedAt||r.saved_at})); }
+function isFirstPass(r){ return r.viaAerea==='1ª tentativa'; }
+function isWithin2(r){ return r.viaAerea==='1ª tentativa'||r.viaAerea==='2ª tentativa (resgate)'; }
+function attemptsNum(r){ if(r.viaAerea==='1ª tentativa')return 1; if(r.viaAerea==='2ª tentativa (resgate)')return 2; if(r.viaAerea==='3ª tentativa')return 3; return null; }
+function hadHypoxemia(r){ return (r.adversos||[]).some(a=>a.indexOf('Hipoxemia')===0) || (r.post||[]).some(p=>p.spo2&&parseFloat(p.spo2)<90); }
+function hadHypotension(r){ return (r.adversos||[]).some(a=>a.indexOf('Hipotensão')===0) || (r.post||[]).some(p=>{const s=p.pa?parseInt(String(p.pa).split('/')[0],10):NaN; return s&&s<90;}); }
+function monthKey(iso){ const d=new Date(iso); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function lastMonths(n){ const arr=[],now=new Date(); for(let i=n-1;i>=0;i--){ const dd=new Date(now.getFullYear(),now.getMonth()-i,1); arr.push({key:dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0'), lbl:dd.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}); } return arr; }
+function pct(a,b){ return b?Math.round(100*a/b):0; }
+function kpi(v,l,cls){ return `<div class="kpi ${cls||''}"><div class="v">${v}</div><div class="l">${l}</div></div>`; }
+
+function barChartSVG(data){
+  const W=320,H=150,pad=22; const bw=(W-pad*2)/data.length; const max=Math.max(1,...data.map(d=>d.value));
+  let s='';
+  data.forEach((d,i)=>{ const h=(d.value/max)*(H-pad*2); const x=pad+i*bw+bw*0.15, w=bw*0.7, y=H-pad-h;
+    s+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="3" fill="#03529D"></rect>`;
+    if(d.value>0) s+=`<text x="${(x+w/2).toFixed(1)}" y="${(y-4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="#06203F">${d.value}</text>`;
+    s+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10" fill="#5E708A">${d.label}</text>`; });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Intubações por mês">${s}</svg>`;
+}
+function lineChartSVG(data){
+  const W=320,H=150,pad=26; const xs=i=>pad+(data.length<=1?(W-pad*2)/2:i*((W-pad*2)/(data.length-1))); const ys=val=>H-pad-(val/100)*(H-pad*2);
+  let grid=''; [0,50,100].forEach(g=>{const y=ys(g);grid+=`<line x1="${pad}" y1="${y.toFixed(1)}" x2="${W-pad}" y2="${y.toFixed(1)}" stroke="#D5E2F0"></line><text x="2" y="${(y+3).toFixed(1)}" font-size="9" fill="#93A5BC">${g}</text>`;});
+  const pts=data.map((d,i)=>({...d,i})).filter(d=>d.value!=null);
+  let path='',dots='';
+  pts.forEach((d,k)=>{ const x=xs(d.i),y=ys(d.value); path+=(k===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1)+' ';
+    dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#0A4787"></circle><text x="${x.toFixed(1)}" y="${(y-7).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#0A4787">${Math.round(d.value)}</text>`; });
+  let labels=''; data.forEach((d,i)=>{ labels+=`<text x="${xs(i).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10" fill="#5E708A">${d.label}</text>`; });
+  const line=pts.length>1?`<path d="${path}" fill="none" stroke="#03529D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>`:'';
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Sucesso na 1ª tentativa por mês">${grid}${line}${dots}${labels}</svg>`;
+}
+
+/* ---------- filtros da evolução ---------- */
+const EVF=[['evF_hosp','hospital'],['evF_setor','setor'],['evF_tec','tecnica'],['evF_guia','guia'],['evF_ind','medIndutor'],['evF_bnm','medBnm'],['evF_via','viaAerea']];
+function evfPopulateHosp(list){
+  const sel=document.getElementById('evF_hosp'); if(!sel) return;
+  const cur=sel.value;
+  const hs=[...new Set(list.map(r=>r.hospital).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Todos</option>'+hs.map(h=>`<option${h===cur?' selected':''}>${esc(h)}</option>`).join('');
+  if(hs.indexOf(cur)===-1&&cur) sel.value='';
+}
+function evfFilter(list){
+  let out=list, active=0;
+  EVF.forEach(([id,field])=>{
+    const sel=document.getElementById(id); if(!sel||!sel.value) return;
+    active++;
+    const val=sel.value;
+    if(val==='__outros') out=out.filter(r=>r.viaAerea && attemptsNum(r)==null);
+    else out=out.filter(r=>(r[field]||'')===val);
+  });
+  const c=document.getElementById('evfCount'); if(c) c.textContent=active?`· ${active} ativo${active>1?'s':''} → ${out.length} caso${out.length!==1?'s':''}`:'';
+  return out;
+}
+function hbarsHTML(rows,total,bad){
+  if(!rows.length||!total) return '<div class="empty">Sem casos com os filtros atuais.</div>';
+  const max=Math.max(1,...rows.map(r=>r.n));
+  return '<div class="hbars">'+rows.map(r=>`<div class="hbar${bad?' bad':''}"><div class="hl">${r.l}</div><div class="ht"><div class="hf" style="width:${Math.round(100*r.n/max)}%"></div></div><div class="hn">${r.n} · ${pct(r.n,total)}%</div></div>`).join('')+'</div>';
+}
+
+function renderEvolucao(){
+  const counts=document.getElementById('evoCounts'); if(!counts) return;
+  const all=EVO_LIST(); const now=Date.now(), DAY=86400000;
+  evfPopulateHosp(all);
+  const list=evfFilter(all);
+  const inWin=(r,d)=> (now-new Date(r.savedAt).getTime())<=d*DAY;
+  counts.innerHTML = kpi(list.filter(r=>inWin(r,7)).length,'Esta semana')+kpi(list.filter(r=>inWin(r,30)).length,'Este mês')+kpi(list.filter(r=>inWin(r,365)).length,'Este ano')+kpi(list.length,'Total');
+
+  const per=(document.querySelector('.chip.sel[data-grp="evop"]')||{dataset:{v:'Mês'}}).dataset.v;
+  let scope=list;
+  if(per==='Semana') scope=list.filter(r=>inWin(r,7));
+  else if(per==='Mês') scope=list.filter(r=>inWin(r,30));
+  else if(per==='Ano') scope=list.filter(r=>inWin(r,365));
+  const rates=document.getElementById('evoRates');
+  if(!scope.length){ rates.innerHTML=`<div class="empty" style="grid-column:1/-1">Sem casos no período/filtros selecionados.</div>`; }
+  else{
+    const n=scope.length;
+    const fp=pct(scope.filter(isFirstPass).length,n), w2=pct(scope.filter(isWithin2).length,n);
+    const hx=pct(scope.filter(hadHypoxemia).length,n), ht=pct(scope.filter(hadHypotension).length,n);
+    const att=scope.map(attemptsNum).filter(x=>x!=null); const meanAtt=att.length?(att.reduce((a,b)=>a+b,0)/att.length):null;
+    rates.innerHTML =
+      kpi(fp+'%','1ª tentativa', fp>=85?'good':(fp>=70?'warn':'bad'))+
+      kpi(w2+'%','≤ 2 tentativas', w2>=90?'good':(w2>=80?'warn':'bad'))+
+      kpi(hx+'%','Hipoxemia', hx<=10?'good':(hx<=20?'warn':'bad'))+
+      kpi(ht+'%','Hipotensão pós', ht<=10?'good':(ht<=20?'warn':'bad'))+
+      kpi(meanAtt!=null?meanAtt.toFixed(1).replace('.',','):'–','Média de tentativas');
+  }
+
+  /* eventos adversos separados por tipo (no período+filtros) */
+  const advC=document.getElementById('chartAdv');
+  if(advC){
+    const types=['Hipoxemia','Hipotensão','Intubação esofágica','Broncoaspiração','Arritmia','Parada cardíaca','Falha na 1ª tentativa','Laringoespasmo / broncoespasmo','Trauma dentário / via aérea'];
+    const rows=types.map(t=>{
+      let nn;
+      if(t==='Hipoxemia') nn=scope.filter(hadHypoxemia).length;
+      else if(t==='Hipotensão') nn=scope.filter(hadHypotension).length;
+      else nn=scope.filter(r=>(r.adversos||[]).some(a=>a.indexOf(t)===0)).length;
+      return {l:t,n:nn};
+    }).filter(r=>r.n>0).sort((a,b)=>b.n-a.n);
+    advC.innerHTML = scope.length ? (rows.length?hbarsHTML(rows,scope.length,true)+`<div class="cmp-note">% sobre ${scope.length} caso(s) no período. Um caso pode ter mais de um evento.</div>`:'<div class="empty">🎉 Nenhum evento adverso no período/filtros.</div>') : '<div class="empty">Sem casos com os filtros atuais.</div>';
+  }
+
+  /* comparativo: 1ª tentativa por técnica e por guia */
+  const cmpC=document.getElementById('chartCmp');
+  if(cmpC){
+    const seg=(field,vals)=>vals.map(vv=>{ const g=scope.filter(r=>(r[field]||'')===vv); return g.length?{l:vv+' <span style="color:var(--muted);font-weight:500">(n='+g.length+')</span>', n:pct(g.filter(isFirstPass).length,g.length)}:null; }).filter(Boolean);
+    const rows=[...seg('tecnica',['Laringoscopia direta','Videolaringoscopia']), ...seg('guia',['Bougie','Fio-guia','Nenhum'])];
+    const max=100;
+    cmpC.innerHTML = rows.length? '<div class="hbars">'+rows.map(r=>`<div class="hbar"><div class="hl">${r.l}</div><div class="ht"><div class="hf" style="width:${r.n}%"></div></div><div class="hn">${r.n}%</div></div>`).join('')+'</div><div class="cmp-note">% de sucesso na 1ª tentativa em cada grupo, no período e filtros atuais.</div>' : '<div class="empty">Preencha técnica e guia nos registros para comparar.</div>';
+  }
+
+  const months=lastMonths(6);
+  const vol=months.map(m=>({label:m.lbl, value:list.filter(r=>monthKey(r.savedAt)===m.key).length}));
+  const fpm=months.map(m=>{ const mr=list.filter(r=>monthKey(r.savedAt)===m.key); return {label:m.lbl, value:mr.length?Math.round(100*mr.filter(isFirstPass).length/mr.length):null}; });
+  document.getElementById('chartVol').innerHTML = list.length?barChartSVG(vol):'<div class="empty">Sem casos ainda.</div>';
+  document.getElementById('chartFP').innerHTML  = list.length?lineChartSVG(fpm):'<div class="empty">Sem casos ainda.</div>';
+  const note=document.getElementById('evoNote'); if(note) note.innerHTML = list.length? 'Hipoxemia/hipotensão consideram o evento adverso marcado <i>ou</i> qualquer vital pós-IOT alterado (SpO₂ &lt; 90% / PAS &lt; 90). Metas de referência: 1ª tentativa ≥ 85–90%.' : '';
+  renderBadges(all);
+}
+
+/* ---------- conquistas ---------- */
+function fpStreak(list){
+  const chron=list.slice().sort((a,b)=>new Date(a.savedAt)-new Date(b.savedAt));
+  let cur=0,best=0;
+  chron.forEach(r=>{ if(isFirstPass(r)){ cur++; if(cur>best)best=cur; } else if(r.viaAerea){ cur=0; } });
+  return best;
+}
+function renderBadges(list){
+  const el=document.getElementById('evoBadges'); if(!el) return;
+  const n=list.length;
+  const ck100=list.filter(r=>parseInt(r.checklistPct)===100).length;
+  const streak=fpStreak(list);
+  const BAD=[
+    {ic:'🎬', t:'Primeiro registro', s:'1 caso',        ok:n>=1,   left:()=>1-n},
+    {ic:'🔟', t:'Rotina criada',     s:'10 casos',      ok:n>=10,  left:()=>10-n},
+    {ic:'🏅', t:'Experiência',       s:'50 casos',      ok:n>=50,  left:()=>50-n},
+    {ic:'🏆', t:'Centurião',         s:'100 casos',     ok:n>=100, left:()=>100-n},
+    {ic:'⚡', t:'Sequência de ouro', s:'5 seguidas em 1ª tentativa', ok:streak>=5, left:()=>5-streak},
+    {ic:'✅', t:'Disciplina',        s:'checklist 100% em 10 casos', ok:ck100>=10, left:()=>10-ck100},
+  ];
+  el.innerHTML=BAD.map(b=>`<div class="badge ${b.ok?'earned':'locked'}"><div class="bi">${b.ic}</div><div class="bt">${b.t}</div><div class="bs">${b.ok?b.s:'faltam '+Math.max(1,b.left())}</div></div>`).join('');
+}
+
+
+
+  function fill(){
+    const sel=document.getElementById('evoMed'); if(!sel) return;
+    const cnt={}; R.forEach(r=>{ if(!r.excluido_em) cnt[r.user_id]=(cnt[r.user_id]||0)+1; });
+    const docs=P.filter(p=>cnt[p.id]).sort((a,b)=>cnt[b.id]-cnt[a.id]);
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Todos os médicos (OMNI)</option>'+docs.map(p=>`<option value="${p.id}">${esc(p.nome||p.email)} · ${cnt[p.id]} caso(s)</option>`).join('');
+    if(cur&&docs.some(p=>p.id===cur)) sel.value=cur; else if(docs[0]) sel.value=docs[0].id;
+    EVO_USER=sel.value;
+  }
+  function who(){ const el=document.getElementById('evoWho'); if(!el) return; const p=P.find(x=>x.id===EVO_USER);
+    el.innerHTML=p?`Evolução de <b>${esc(p.nome||p.email)}</b>${p.crm?' · CRM '+esc(p.crm)+(p.uf?'/'+esc(p.uf):''):''}`:'Todos os médicos juntos'; }
+  window.renderEvoAdmin=function(){ fill(); who(); renderEvolucao(); };
+  document.addEventListener('change',e=>{
+    if(e.target.id==='evoMed'){ EVO_USER=e.target.value; ['evF_hosp','evF_setor','evF_tec','evF_guia','evF_ind','evF_bnm','evF_via'].forEach(id=>{const s=document.getElementById(id); if(s) s.value='';}); who(); renderEvolucao(); }
+    else if(e.target.classList&&e.target.classList.contains('evf')) renderEvolucao();
+  });
+  document.addEventListener('click',e=>{
+    const c=e.target.closest('#t-evolucao .chip[data-grp="evop"]');
+    if(c){ c.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x===c)); renderEvolucao(); return; }
+    if(e.target.id==='evfClear'){ ['evF_hosp','evF_setor','evF_tec','evF_guia','evF_ind','evF_bnm','evF_via'].forEach(id=>{const s=document.getElementById(id); if(s) s.value='';}); renderEvolucao(); }
   });
 })();
 </script>
