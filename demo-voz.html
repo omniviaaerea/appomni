@@ -2498,11 +2498,17 @@ function openRec(){
 }
 const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 let baseTxt='', curTxt='', endWait=null;
+function stat(m){ const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.textContent=m; } }
 function showTxt(){ const ta=$('vzTxt'); if(ta){ ta.value=(baseTxt+' '+curTxt).trim(); ta.scrollTop=ta.scrollHeight; } }
 function mkRec(){
-  const r=new SR(); r.lang='pt-BR'; r.continuous=!IOS; r.interimResults=true;
-  r.onresult=ev=>{ if(r!==rec) return; curTxt=Array.from(ev.results).map(x=>x[0].transcript.trim()).join(' '); showTxt(); };
-  r.onerror=ev=>{ if(r!==rec) return; if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ recording=false; setIdle('Microfone bloqueado — libere a permissão do microfone para este site, ou digite.'); } };
+  const r=new SR(); r.lang='pt-BR'; r.continuous=true; r.interimResults=true;
+  r.onresult=ev=>{ if(r!==rec) return; curTxt=Array.from(ev.results).map(x=>x[0].transcript.trim()).join(' '); showTxt(); stat(''); };
+  r.onstart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); };
+  r.onaudiostart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); };
+  r.onspeechstart=()=>{ if(r!==rec) return; stat('🗣 captando sua voz…'); };
+  r.onerror=ev=>{ if(r!==rec) return;
+    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ recording=false; setIdle('Microfone ou reconhecimento de voz bloqueado. No iPhone: Ajustes → Safari → Microfone = Permitir, e Ajustes → Tempo de Uso/Privacidade → Reconhecimento de Fala = ativado para o Safari.'); return; }
+    if(ev.error!=='no-speech'&&ev.error!=='aborted') stat('⚠ reconhecimento: '+ev.error); };
   r.onend=()=>{ if(r!==rec) return;
     if(curTxt){ baseTxt=(baseTxt+' '+curTxt).trim(); curTxt=''; showTxt(); }
     if(recording){ setTimeout(()=>{ if(recording&&r===rec){ try{ r.start(); }catch(e){} } },120); }
