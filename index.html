@@ -2506,10 +2506,23 @@ function armWatchdog(){ clearTimeout(wd); if(!IOS||nSess<2) return;
   wd=setTimeout(()=>{ if(recording&&!gotRes&&!(($('vzTxt')||{}).value||'').trim()){
     const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.innerHTML='⚠ O iPhone travou o reconhecimento de voz (falha conhecida do Safari a partir da 2ª gravação). <button data-vz="reload" style="margin-top:8px;display:block;width:100%;border:none;border-radius:10px;padding:11px;background:#03529D;color:#fff;font:800 14px var(--display);cursor:pointer">↻ Reiniciar microfone</button><span style="font-size:12px">O que já foi preenchido fica salvo.</span>'; } } },6000); }
 function stat(m){ const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.textContent=m; } }
+/* Android/Chrome às vezes devolve cada pedaço da frase como um resultado novo e cumulativo
+   ("idade", "idade 25", "idade 25 anos"): junta só a versão mais completa de cada trecho */
+function mergeRes(results){
+  const out=[]; const k=x=>x.toLowerCase().replace(/[^a-z0-9à-ú ]/gi,'').replace(/\s+/g,' ').trim();
+  for(let i=0;i<results.length;i++){ const t=(results[i][0]&&results[i][0].transcript||'').trim(); if(!t) continue;
+    const last=out.length?out[out.length-1]:null;
+    if(last!==null){ const a=k(last), b=k(t);
+      if(b===a||a.endsWith(b)) continue;                 /* repetido */
+      if(b.startsWith(a)){ out[out.length-1]=t; continue; } /* versão mais completa do mesmo trecho */
+    }
+    out.push(t); }
+  return out.join(' ');
+}
 function showTxt(){ const ta=$('vzTxt'); if(ta){ ta.value=(baseTxt+' '+curTxt).trim(); ta.scrollTop=ta.scrollHeight; } }
 function mkRec(){
   const r=new SR(); r.lang='pt-BR'; r.continuous=true; r.interimResults=true;
-  r.onresult=ev=>{ if(r!==rec) return; gotRes=true; clearTimeout(wd); curTxt=Array.from(ev.results).map(x=>x[0].transcript.trim()).join(' '); showTxt(); stat(''); };
+  r.onresult=ev=>{ if(r!==rec) return; gotRes=true; clearTimeout(wd); curTxt=mergeRes(ev.results); showTxt(); stat(''); };
   r.onstart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); };
   r.onaudiostart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); armWatchdog(); };
   r.onspeechstart=()=>{ if(r!==rec) return; stat('🗣 captando sua voz…'); };
