@@ -2498,13 +2498,23 @@ function openRec(){
 }
 const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 let baseTxt='', curTxt='', endWait=null;
+let nSess=0, gotRes=false, wd=null;
+/* iPhone: tocar um áudio mudo no toque "reinicia" a sessão de áudio do Safari */
+let _sil=null;
+function silentWav(){ const n=800,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,8000,true); v.setUint32(28,16000,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
+function unlockAudio(){ try{ if(!_sil) _sil=new Audio(silentWav()); _sil.currentTime=0; const p=_sil.play(); if(p&&p.then) p.then(()=>{ try{ _sil.pause(); }catch(e){} }).catch(()=>{}); }catch(e){} }
+function armWatchdog(){ clearTimeout(wd); if(!IOS||nSess<2) return;
+  wd=setTimeout(()=>{ if(recording&&!gotRes&&!(($('vzTxt')||{}).value||'').trim()){
+    const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.innerHTML='⚠ O iPhone travou o reconhecimento de voz (falha conhecida do Safari a partir da 2ª gravação). <button data-vz="reload" style="margin-top:8px;display:block;width:100%;border:none;border-radius:10px;padding:11px;background:#03529D;color:#fff;font:800 14px var(--display);cursor:pointer">↻ Reiniciar microfone</button><span style="font-size:12px">O que já foi preenchido fica salvo.</span>'; } } },6000); }
 function stat(m){ const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.textContent=m; } }
 function showTxt(){ const ta=$('vzTxt'); if(ta){ ta.value=(baseTxt+' '+curTxt).trim(); ta.scrollTop=ta.scrollHeight; } }
 function mkRec(){
   const r=new SR(); r.lang='pt-BR'; r.continuous=true; r.interimResults=true;
-  r.onresult=ev=>{ if(r!==rec) return; curTxt=Array.from(ev.results).map(x=>x[0].transcript.trim()).join(' '); showTxt(); stat(''); };
+  r.onresult=ev=>{ if(r!==rec) return; gotRes=true; clearTimeout(wd); curTxt=Array.from(ev.results).map(x=>x[0].transcript.trim()).join(' '); showTxt(); stat(''); };
   r.onstart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); };
-  r.onaudiostart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); };
+  r.onaudiostart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); armWatchdog(); };
   r.onspeechstart=()=>{ if(r!==rec) return; stat('🗣 captando sua voz…'); };
   r.onerror=ev=>{ if(r!==rec) return;
     if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ recording=false; setIdle('Microfone ou reconhecimento de voz bloqueado. No iPhone: Ajustes → Safari → Microfone = Permitir, e Ajustes → Tempo de Uso/Privacidade → Reconhecimento de Fala = ativado para o Safari.'); return; }
@@ -2515,11 +2525,11 @@ function mkRec(){
     else if(endWait){ const f=endWait; endWait=null; f(); } };
   return r;
 }
-function killRec(){ if(rec){ const old=rec; rec=null; try{ old.onresult=old.onend=old.onerror=null; old.abort(); }catch(e){} } }
+function killRec(){ clearTimeout(wd); if(rec){ const old=rec; rec=null; try{ old.onresult=old.onend=old.onerror=null; old.abort(); }catch(e){} } }
 function startRec(){
-  baseTxt=''; curTxt=''; recording=false; const had=!!rec; killRec();
+  baseTxt=''; curTxt=''; recording=false; gotRes=false; nSess++; if(IOS) unlockAudio(); const had=!!rec; killRec();
   const go=()=>{ try{
-      rec=mkRec(); recording=true; rec.start(); t0=Date.now(); clearInterval(tick);
+      rec=mkRec(); recording=true; rec.start(); t0=Date.now(); clearInterval(tick); armWatchdog();
       tick=setInterval(()=>{ const e=$('vzTime'); if(e) e.textContent=mm(Math.floor((Date.now()-t0)/1000)); },500);
       if(navigator.vibrate) navigator.vibrate(30);
     }catch(e){ setIdle('Não foi possível iniciar o microfone. Digite ou use um exemplo.'); } };
@@ -2559,6 +2569,7 @@ sh.addEventListener('click',e=>{
   if(a==='ex') typeExample(+b.dataset.i);
   if(a==='done'){ if(recording){ stopRecWait().then(()=>{ if(curTxt){ baseTxt=(baseTxt+' '+curTxt).trim(); curTxt=''; showTxt(); } killRec(); setIdle(); review(); }); } else review(); }
   if(a==='again') openRec();
+  if(a==='reload'){ try{ saveLive(); sessionStorage.setItem('omni_vz_resume',(TABS[active]||{}).id||'registro'); }catch(e){} location.reload(); }
   if(a==='apply'){ const sel=[...sh.querySelectorAll('[data-vzi]')].filter(x=>x.checked).map(x=>items[+x.dataset.vzi]); ov.classList.remove('show'); applyAll(sel); }
 });
 fab.addEventListener('click',openRec);
@@ -2568,6 +2579,12 @@ function syncFab(){ const id=(TABS[active]||{}).id; fab.classList.toggle('show',
 const _sel=window.selectTab; if(typeof _sel==='function'){ window.selectTab=function(i){ const r=_sel.apply(this,arguments); syncFab(); return r; }; selectTab=window.selectTab; }
 setInterval(syncFab,600); syncFab();
 window.OmniVoz={parse,EXAMPLES};
+(function resume(){ let tab=null; try{ tab=sessionStorage.getItem('omni_vz_resume'); sessionStorage.removeItem('omni_vz_resume'); }catch(e){}
+  if(!tab) return;
+  try{ const empty=!['f_nome','f_idade','f_preal','vi_pa'].some(id=>($(id)||{}).value)&&!Object.keys(state).some(k=>state[k]); if(empty&&typeof restoreLive==='function') restoreLive(); }catch(e){}
+  setTimeout(()=>{
+    const i=TABS.findIndex(t=>t.id===tab); if(i>=0) selectTab(i);
+    ov.classList.add('show'); sh.innerHTML=`<div class="vz-top"><h3>🎙 Microfone reiniciado</h3><button class="vz-x" data-vz="close">×</button></div><div class="vz-tip">Tudo o que você já tinha preenchido continua aqui. Toque para gravar de novo.</div><div class="vz-btns"><button class="vz-b2" data-vz="close">Agora não</button><button class="vz-b1" data-vz="again">🎙 Gravar</button></div>`; },900); })();
 })();
 </script>
 <!-- ===== fim registro por voz ===== -->
