@@ -2145,5 +2145,448 @@ window.addEventListener('appinstalled',()=>{ const w=document.getElementById('in
   });
 })();
 </script>
+<!-- ===== OMNI · Registro por voz ===== -->
+<style id="vzcss">
+.vz-fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:70;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;
+  background:#03529D;box-shadow:0 6px 18px rgba(3,82,157,.45);display:none;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.vz-fab.show{display:flex}.vz-fab:active{transform:scale(.92)}
+.vz-fab svg{width:26px;height:26px;fill:#fff}
+.vz-ov{position:fixed;inset:0;z-index:200;background:rgba(2,20,40,.55);display:none;align-items:flex-end;justify-content:center}
+.vz-ov.show{display:flex}
+.vz-sheet{width:100%;max-width:640px;max-height:92vh;overflow:auto;background:var(--card);color:var(--ink);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.25);font-family:var(--display)}
+.vz-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.vz-top h3{margin:0;font-size:17px;font-weight:800;flex:1}
+.vz-x{border:none;background:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1;padding:4px 8px}
+.vz-rec{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.vz-dot{width:12px;height:12px;border-radius:50%;background:#C0262D;animation:vzb 1s infinite}
+@keyframes vzb{50%{opacity:.25}}
+.vz-time{font-weight:800;font-variant-numeric:tabular-nums;min-width:44px}
+.vz-wave{flex:1;display:flex;align-items:center;gap:3px;height:28px}
+.vz-wave i{flex:1;max-width:5px;border-radius:3px;background:#61A4D5;height:30%;animation:vzw 1s ease-in-out infinite}
+.vz-wave.idle i{animation:none;height:18%;opacity:.5}
+@keyframes vzw{0%,100%{height:20%}50%{height:95%}}
+.vz-txt{min-height:92px;width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:500 15px/1.45 var(--display);color:var(--ink);background:var(--card);resize:vertical}
+.vz-interim{color:var(--muted);font-size:14px;min-height:20px;margin:6px 2px 0;font-style:italic}
+.vz-tip{font-size:12.5px;color:var(--muted);line-height:1.45;margin:10px 2px}
+.vz-tip b{color:var(--ink)}
+.vz-ex{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.vz-ex button{border:1.5px dashed #61A4D5;background:transparent;color:var(--ink);border-radius:999px;padding:6px 11px;font:700 12px var(--display);cursor:pointer}
+.vz-btns{display:flex;gap:10px;margin-top:12px}
+.vz-btns button{flex:1;border:none;border-radius:12px;padding:13px;font:800 15px var(--display);cursor:pointer}
+.vz-b1{background:#03529D;color:#fff}.vz-b2{background:var(--bg);color:var(--ink)}
+.vz-stop{background:#C0262D!important;color:#fff!important}
+.vz-warn{background:#FFF4E5;color:#7A4A00;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-bottom:10px;line-height:1.4}
+html[data-theme="dark"] .vz-warn{background:#3A2A0A;color:#FFD89A}
+.vz-grp{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 2px 6px}
+.vz-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1.5px solid var(--line);border-radius:11px;margin-bottom:6px;cursor:pointer}
+.vz-row input{width:18px;height:18px;accent-color:#03529D;flex:none}
+.vz-row .l{font-size:12.5px;color:var(--muted);min-width:96px}
+.vz-row .v{font-weight:800;font-size:14px;flex:1}
+.vz-row .old{display:block;font-weight:500;font-size:11.5px;color:var(--muted);text-decoration:line-through}
+.vz-row .inf{display:inline-block;font-size:10px;font-weight:800;color:#03529D;background:#D9EEFC;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.vz-row.off{opacity:.45}
+.vz-none{color:var(--muted);font-size:14px;padding:16px 4px;text-align:center}
+input.vz-hl,select.vz-hl,textarea.vz-hl,li.vz-hl{background-color:rgba(97,164,213,.12)!important}
+.ghead.vz-hl,.ck-sh.vz-hl{box-shadow:0 0 0 3px #61A4D5!important}
+.vz-hl{box-shadow:0 0 0 2.5px #61A4D5!important;border-color:#03529D!important;animation:vzh 1.2s ease-out 2}
+.chip.vz-hl,.popt.vz-hl{border-radius:999px}
+@keyframes vzh{0%{box-shadow:0 0 0 0 rgba(97,164,213,.9)}100%{box-shadow:0 0 0 2.5px #61A4D5}}
+.vz-banner{position:sticky;top:0;z-index:5;display:none;align-items:center;gap:10px;background:#D9EEFC;color:#06203F;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13px;font-weight:600}
+.vz-banner.show{display:flex}.vz-banner span{flex:1}
+.vz-banner button{border:none;background:#03529D;color:#fff;border-radius:8px;padding:6px 10px;font:800 12px var(--display);cursor:pointer}
+html[data-theme="dark"] .vz-banner{background:#0D2C4F;color:#EEF4FA}
+</style>
+
+<button class="vz-fab" id="vzFab" aria-label="Preencher por voz"><svg viewBox="0 0 24 24"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 1 0-7 0v6A3.5 3.5 0 0 0 12 15zm6-3.6a1 1 0 1 0-2 0 4 4 0 0 1-8 0 1 1 0 1 0-2 0 6 6 0 0 0 5 5.9V20H8.5a1 1 0 1 0 0 2h7a1 1 0 1 0 0-2H13v-2.7a6 6 0 0 0 5-5.9z"/></svg></button>
+
+<div class="vz-ov" id="vzOv"><div class="vz-sheet" id="vzSheet"></div></div>
+
+<script>
+(function(){
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const FAB_TABS=['registro','checklist','pos'];
+const EXAMPLES=[
+ ['Caso completo','Paciente iniciais J S, masculino, 58 anos, 1 metro e 75, uns 80 quilos, no pronto-socorro do Hospital Santa Clara. Indicação insuficiência respiratória. PA 100 por 60, frequência cardíaca 118, saturação 86. Pré-oxigenei com VNI. Cetamina e rocurônio, videolaringoscopia com bougie, tubo 8, intubei na primeira tentativa. Depois da intubação PA 92 por 58, FC 110, saturação 95. Sedação com fentanil e midazolam. Sem intercorrências, seguiu pra UTI.'],
+ ['Via aérea difícil','Mulher, 72 anos, 65 quilos, rebaixamento, Glasgow 7, proteção de via aérea. Etomidato e succinilcolina. Tentei laringoscopia direta, não passei, ventilei com bolsa válvula máscara e na segunda tentativa intubei com videolaringoscopia e fio-guia, tubo 7 e meio. Após a intubação dessaturou até 82 e aos 5 minutos PA 80 por 50, hipotensão, iniciei noradrenalina. Seguiu para UTI.'],
+ ['Checklist','Preparar paciente ok. Equipamento: monitorizado, capnografia, bougie, laringoscópio testado, ventilador pronto, ambu testado, guedel. Time: líder, fisioterapeuta e enfermeira dentro da sala, circulante no corredor. Planos A, B e C falados, kit de crico separado.'],
+ ['Rápido','Homem 40 anos, proteção de via aérea, cetamina e rocurônio, vídeo com bougie, tubo 8, de primeira, sem intercorrências, seguiu cuidados pós-IOT.']
+];
+
+/* ---------------- texto → campos ---------------- */
+const NUMW={dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10};
+function norm(s){
+  let t=s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  t=t.replace(/[-–—_]/g,' ').replace(/(\d),(\d)/g,'$1.$2').replace(/[;:!?()"]/g,' , ');
+  t=t.replace(/\b(dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\b/g,m=>NUMW[m]);
+  t=t.replace(/\b(\d)\s+e\s+meio\b/g,'$1.5');
+  t=t.replace(/\bsp\s*o\s*2\b|\bspo2\b/g,'spo2').replace(/\bvideo\s+laring/g,'videolaring').replace(/\bpre\s+oxigen/g,'preoxigen');
+  t=t.replace(/\brocu\s*ronio\b/g,'rocuronio').replace(/\bsuccinil\s*colina\b/g,'succinilcolina').replace(/\bfio\s+guia\b/g,'fioguia');
+  return t.replace(/\s+/g,' ').trim();
+}
+const NEG=/\b(sem|nao|nega|nenhum|nenhuma|ausencia de)\s+(\S+\s+){0,2}$/;
+function hitPos(t,re){ const g=new RegExp(re.source,'g'); let m,out=[]; while((m=g.exec(t))){ const pre=t.slice(Math.max(0,m.index-22),m.index).split(/[,.]/).pop(); out.push({i:m.index,neg:NEG.test(pre),m}); } return out; }
+function hasPos(t,re){ return hitPos(t,re).some(h=>!h.neg); }
+const POSTMARK=/\b(apos|depois|pos)\s+(a\s+|da\s+|de\s+)?(intub|iot|procedimento)|\bpos iot\b|\bpos intubacao\b/;
+const MINRE=/\b(\d{1,2})\s*min(utos?)?\b/g;
+function minuteNear(t,i,j){ const g=new RegExp(MINRE.source,'g'); let m,best=null,bd=99; while((m=g.exec(t))){ const d=m.index>=j?m.index-j:(i-(m.index+m[0].length)); if(d>=0&&d<=30&&d<bd){bd=d;best=+m[1];} } return best; }
+function slotOf(min){ const S=[0,5,15,30,60]; let b=0; S.forEach((s,k)=>{ if(Math.abs(s-min)<Math.abs(S[b]-min)) b=k; }); return b; }
+
+function parse(raw){
+  const t=norm(raw), out=[]; const add=(o)=>out.push(o);
+  const pm=t.search(POSTMARK); const postAt=pm<0?Infinity:pm;
+  /* trecho da sedação (separado para não confundir com indutor) */
+  const sedM=t.match(/\b(sedacao|sedoanalgesia|sedado|sedada|manutencao|em bomba)\b.{0,70}/);
+  const tNoSed=sedM?t.replace(sedM[0],' '):t;
+
+  /* --- paciente --- */
+  let m;
+  if((m=t.match(/\batendimento\s*(?:numero\s*|n\s*)?(\d{3,})/))) add({tab:'Registro',l:'Identificação',v:'Atend. '+m[1],f:'f_nome'});
+  else if((m=t.match(/\b(?:iniciais|paciente)\s+([a-z])\s*\.?\s+([a-z])\b(?:\s*\.?\s*([a-z])\b)?/))&&!/^(e|o|a)$/.test(m[2])) add({tab:'Registro',l:'Identificação',v:[m[1],m[2],m[3]].filter(Boolean).map(x=>x.toUpperCase()).join('.')+'.',f:'f_nome'});
+  if((m=t.match(/\b(\d{1,3})\s*anos\b/))) add({tab:'Registro',l:'Idade',v:m[1],f:'f_idade',show:m[1]+' anos'});
+  if(/\b(masculino|homem|senhor)\b/.test(t)) add({tab:'Registro',l:'Sexo',v:'M',f:'f_sexo',show:'Masculino'});
+  else if(/\b(feminino|mulher|senhora|gestante)\b/.test(t)) add({tab:'Registro',l:'Sexo',v:'F',f:'f_sexo',show:'Feminino'});
+  let alt=null;
+  if((m=t.match(/\b1\s*(?:metro|m)\s*(?:e\s*)?(\d{1,2})\b/))) alt=100+(+m[1]<10?m[1]*10:+m[1]);
+  else if((m=t.match(/\b(1)\.(\d{2})\s*(?:m|metro|de altura)?\b/))&&/altura|metro|\bm\b/.test(t)) alt=100+ +m[2];
+  else if((m=t.match(/\b(1\d{2})\s*(?:cm|centimetros)\b/))) alt=+m[1];
+  if(alt&&alt>120&&alt<220) add({tab:'Registro',l:'Altura',v:String(alt),f:'f_altura',show:alt+' cm'});
+  if((m=t.match(/\b(\d{2,3}(?:\.\d)?)\s*(?:kg|quilos?|kilos?|quilogramas?)\b/))||(m=t.match(/\bpes(?:o|ando)\s*(?:de\s*|uns\s*|cerca de\s*|aproximadamente\s*)?(\d{2,3})\b/))) add({tab:'Registro',l:'Peso real',v:m[1],f:'f_preal',show:m[1]+' kg'});
+
+  /* --- medicações / técnica --- */
+  if(hasPos(tNoSed,/\b(cetamina|quetamina|ketamina|ketamin)\b/)) add({tab:'Registro',l:'Indutor',chip:['indutor','Cetamina']});
+  else if(hasPos(tNoSed,/\betomidat\w*/)) add({tab:'Registro',l:'Indutor',chip:['indutor','Etomidato']});
+  if(hasPos(t,/\b(succinilcolina|succinil|sucinil\w*|suxa\w*|sux)\b/)) add({tab:'Registro',l:'Bloqueador',chip:['bnm','Succinilcolina']});
+  else if(hasPos(t,/\b(rocuronio|rocu|rocuronium)\b/)) add({tab:'Registro',l:'Bloqueador',chip:['bnm','Rocurônio']});
+  if(/\bsem (guia|bougie|fioguia|adjunto)\b|\bnenhum (guia|adjunto)\b/.test(t)) add({tab:'Registro',l:'Guia / adjunto',chip:['guia','Nenhum']});
+  else if(hasPos(t,/\b(bougie|bugi|buji|bougi|bouge|bujie)\b/)) add({tab:'Registro',l:'Guia / adjunto',chip:['guia','Bougie']});
+  else if(hasPos(t,/\b(fioguia|mandril|estilete)\b/)) add({tab:'Registro',l:'Guia / adjunto',chip:['guia','Fio-guia']});
+  if(/\b(protecao (de |da )?via aerea|rebaixamento|glasgow|nivel de consciencia)\b/.test(t)) add({tab:'Registro',l:'Indicação',chip:['ind','A — Proteção de via aérea']});
+  else if(/\b(insuficiencia|falencia|falha) (respiratoria|de oxigenacao|ventilatoria)|desconforto respiratorio\b/.test(t)) add({tab:'Registro',l:'Indicação',chip:['ind','B — Falência respiratória']});
+  else if(/\bcurso (esperado|da doenca)|deterioracao esperada|piora esperada\b/.test(t)) add({tab:'Registro',l:'Indicação',chip:['ind','C — Curso esperado da doença']});
+
+  const vids=hitPos(t,/\b(videolaring\w*|video|glidescope|mcgrath|c mac|cmac)\b/).filter(h=>!h.neg), dirs=hitPos(t,/\b(laringoscopia direta|direta|macintosh|laringoscopio comum|lamina curva)\b/).filter(h=>!h.neg);
+  if(vids.length||dirs.length){ const lv=vids.length?vids[vids.length-1].i:-1, ld=dirs.length?dirs[dirs.length-1].i:-1;
+    add({tab:'Checklist',l:'Técnica',pick:['equipamento.1.tecnica', lv>ld?'Videolaringoscopia':'Laringoscopia direta'], inf:(vids.length&&dirs.length)?'técnica do sucesso':''}); }
+  if((m=t.match(/\btubo\s*(?:numero\s*|n\s*)?(\d)(?:\.(\d))?\b/))){ const tb=m[1]+'.'+(m[2]||'0'); if(['6.5','7.0','7.5','8.0','8.5'].includes(tb)) add({tab:'Checklist',l:'Tubo',pick:['equipamento.1.tubo',tb]}); }
+  if(/\b(vni|ventilacao nao invasiva|bipap|bilevel)\b/.test(t)) add({tab:'Checklist',l:'Pré-oxigenação',pick:['paciente.3.preox','VNI']});
+  else if(/\b(nao reinalante|mascara (com|de) reservatorio|mnr)\b/.test(t)) add({tab:'Checklist',l:'Pré-oxigenação',pick:['paciente.3.preox','Máscara não reinalante']});
+  else if(/preoxigen.{0,30}\b(ambu|bvm|bolsa)|\b(ambu|bvm|bolsa).{0,30}preoxigen/.test(t)) add({tab:'Checklist',l:'Pré-oxigenação',pick:['paciente.3.preox','DBVM com reservatório']});
+
+  /* --- sinais vitais (entrada x pós) --- */
+  const VIT=[
+    ['pa',/\b(?:pa|pressao(?: arterial)?)\s*(?:de\s*)?(\d{2,3})\s*(?:por|x|\/|sobre)\s*(\d{2,3})\b/g,'PA'],
+    ['fc',/\b(?:fc|frequencia cardiaca|pulso)\s*(?:de\s*)?(\d{2,3})\b|\b(\d{2,3})\s*bpm\b/g,'FC'],
+    ['fr',/\b(?:fr|frequencia respiratoria)\s*(?:de\s*)?(\d{1,2})\b|\b(\d{1,2})\s*irpm\b/g,'FR'],
+    ['spo2',/\b(?:spo2|saturacao|saturando|sat)\s*(?:de\s*|em\s*|a\s*)?(\d{2,3})\b/g,'SpO₂'],
+    ['temp',/\b(?:temperatura|temp|tax)\s*(?:de\s*)?(\d{2}(?:\.\d)?)\b/g,'Temp'],
+    ['glic',/\b(?:glicemia|dextro|hgt|glicose)\s*(?:de\s*)?(\d{2,3})\b/g,'Glicemia']];
+  const seen={};
+  VIT.forEach(([k,re,lab])=>{ let mm; re.lastIndex=0; while((mm=re.exec(t))){
+    const val=k==='pa'?mm[1]+'/'+mm[2]:(mm[1]||mm[2]); const mi=minuteNear(t,mm.index,mm.index+mm[0].length);
+    const isPost = mm.index>postAt || mi!==null;
+    if(!isPost){ if(seen['in'+k]) continue; seen['in'+k]=1; add({tab:'Registro',l:lab+' entrada',v:val,f:'vi_'+k,show:val+(k==='spo2'?'%':'')}); }
+    else if(['pa','fc','fr','spo2'].includes(k)){ const s=slotOf(mi===null?0:mi); if(seen['p'+s+k]) continue; seen['p'+s+k]=1;
+      add({tab:'Pós-IOT',l:lab+' · '+['0','5','15','30','60'][s]+' min',v:val,f:'pv_'+s+'_'+k,show:val+(k==='spo2'?'%':'')}); }
+  } });
+
+  /* --- sedação --- */
+  if(sedM){ const s=sedM[0];
+    if(/fenta/.test(s)&&/mida/.test(s)) add({tab:'Pós-IOT',l:'Sedação',chip:['sed','Fentanil + Midazolam']});
+    else if(/propofol/.test(s)) add({tab:'Pós-IOT',l:'Sedação',chip:['sed','Propofol + Fentanil']});
+    else if(/cetamina|quetamina|ketamina/.test(s)) add({tab:'Pós-IOT',l:'Sedação',chip:['sed','Cetamina']}); }
+
+  /* --- desfecho da via aérea / resgate --- */
+  let via='';
+  if(/\b(cricotireoidostomia|cricotomia|cricostomia|crico|via aerea cirurgica)\b/.test(t)) via='Via aérea cirúrgica';
+  else if(/\bnao (consegui|conseguimos|foi possivel) intubar\b/.test(t)) via='Não foi possível intubar';
+  else if(/\b(terceira tentativa|na terceira|3a tentativa|3 tentativas)\b/.test(t)) via='3ª tentativa';
+  else if(/\b(segunda tentativa|na segunda|2a tentativa|2 tentativas)\b/.test(t)) via='2ª tentativa (resgate)';
+  else if(/\b(primeira tentativa|de primeira|na primeira|1a tentativa)\b/.test(t)) via='1ª tentativa';
+  const ml=hasPos(t,/\b(mascara laringea|extraglotico|igel|i gel|tubo laringeo)\b/);
+  if(!via&&ml) via='Extraglótico (máscara laríngea)';
+  if(via) add({tab:'Pós-IOT',l:'Desfecho via aérea',chip:['via',via]});
+  const bvm=hitPos(t,/\b(bvm|ambu|bolsa valvula|ventilei|ventilamos)\b/).filter(h=>!h.neg&&!/preoxigen/.test(t.slice(Math.max(0,h.i-30),h.i+30)));
+  if(/\bsem resgate\b/.test(t)) add({tab:'Pós-IOT',l:'Resgate',chip:['resgate','Sem resgate']});
+  else if(/^(2|3)/.test(via)&&ml) add({tab:'Pós-IOT',l:'Resgate',chip:['resgate','Extraglótico + ventilação']});
+  else if(/^(2|3)/.test(via)&&bvm.length) add({tab:'Pós-IOT',l:'Resgate',chip:['resgate','BVM + ventilação']});
+  else if(via==='1ª tentativa') add({tab:'Pós-IOT',l:'Resgate',chip:['resgate','Sem resgate'],inf:'deduzido'});
+
+  /* --- eventos adversos --- */
+  const ADV=[['Hipoxemia',/\b(dessatur\w*|hipoxemia|saturacao caiu|caiu a saturacao)\b/],['Hipotensão',/\b(hipotens\w*|pressao caiu|caiu a pressao|chocou)\b/],
+    ['Intubação esofágica',/\besofag\w*/],['Broncoaspiração',/\b(broncoaspir\w*|aspirou)\b/],['Arritmia',/\b(arritmia|bradicardi\w*|taquicardia ventricular|fibrilacao)\b/],
+    ['Parada cardíaca',/\b(parada|pcr|parou)\b/],['Laringoespasmo / broncoespasmo',/\b(laringoespasmo|broncoespasmo)\b/],['Trauma dentário / via aérea',/\b(trauma dentario|quebrou (o |um )?dente|lesao de via aerea)\b/]];
+  const advs=ADV.filter(([,re])=>hasPos(t,re)).map(([n])=>n);
+  if(/^(2|3)/.test(via)) advs.push('Falha na 1ª tentativa');
+  if(advs.length){ add({tab:'Pós-IOT',l:'Evento adverso',chip:['advhas','Sim']}); advs.forEach(a=>add({tab:'Pós-IOT',l:'Evento',adv:a,inf:a==='Falha na 1ª tentativa'?'deduzido':''})); }
+  else if(/\bsem (intercorrencias?|eventos?( adversos?)?|complicac\w*)\b|\btranquil[oa]\b/.test(t)||ADV.some(([,re])=>hitPos(t,re).some(h=>h.neg))) add({tab:'Pós-IOT',l:'Evento adverso',chip:['advhas','Não']});
+
+  /* --- desfecho / local --- */
+  if(/\b(obito|faleceu|morreu)\b/.test(t)) add({tab:'Pós-IOT',l:'Desfecho paciente',chip:['desf','Óbito']});
+  else if(/\b(reversao|reverteu|extubad\w*)\b/.test(t)) add({tab:'Pós-IOT',l:'Desfecho paciente',chip:['desf','Reversão do procedimento']});
+  else if(/\b(seguiu|transferid\w*|encaminhad\w*|internad\w*|cuidados pos)\b|\b(foi|vai|subiu) (pra|para) (a )?uti\b/.test(t)) add({tab:'Pós-IOT',l:'Desfecho paciente',chip:['desf','Seguiu cuidados pós-IOT']});
+
+  let setor='';
+  if(/\b(samu|pre hospitalar|ambulancia|via publica|domicilio|usa)\b/.test(t)) setor='Pré-hospitalar';
+  else if(/\b(pronto socorro|sala vermelha|sala de emergencia)\b|\b(no|na) (ps|emergencia)\b/.test(t)) setor='PS (pronto-socorro)';
+  else if(/\bcentro cirurgico\b/.test(t)) setor='CC (centro cirúrgico)';
+  else if(/\b(na|no) uti\b/.test(t)&&!/\b(pra|para|para a|pra a) uti\b/.test(t)) setor='UTI';
+  else if(/\benfermaria\b/.test(t)) setor='Enfermaria';
+  if(setor) add({tab:'Checklist',l:'Setor',v:setor,f:'f_setor'});
+  const lowRaw=raw.replace(/[.,;]/g,' , ');
+  if((m=lowRaw.match(/hospital\s+((?:[A-Za-zÀ-ÿ']+\s*){1,5})/i))){
+    const STOP=/^(no|na|nos|nas|em|paciente|setor|com|indicacao|indicação|pa|pressão|pressao|idade|e|,|intubei|intubado|intubada|masculino|feminino)$/i;
+    const w=[]; for(const x of m[1].trim().split(/\s+/)){ if(STOP.test(x)||x===',') break; w.push(x); if(w.length>=4) break; }
+    if(w.length) add({tab:'Checklist',l:'Hospital',v:'Hospital '+w.map(x=>/^(de|do|da|dos|das)$/i.test(x)?x.toLowerCase():x[0].toUpperCase()+x.slice(1).toLowerCase()).join(' '),f:'f_hosp'}); }
+  if((m=t.match(/\b(\d{1,2})\s*h(?:oras)?\s*(?:seguidas\s*)?(?:de\s*)?plantao\b/))||(m=t.match(/\bplantao\s*de\s*(\d{1,2})\s*h/))) add({tab:'Checklist',l:'Horas de plantão',v:m[1],f:'f_plantao',show:m[1]+' h'});
+  /* --- CHECKLIST (itens, grupos e seções) --- */
+  parseCk(t,add);
+  return out;
+}
+
+/* ---------------- checklist por voz ---------------- */
+const OKW='(ok|okay|positivo|positiva|presente|todos|todo|pronto|pronta|prontos|prontas|feito|feita|checad[oa]s?|conferid[oa]s?|complet[oa]|tudo certo|certo|preparad[oa]s?|testad[oa]s?|separad[oa]s?|disponive(l|is)|garantid[oa]|check|chequei|conferi|testei|separei|preparei|garanti)';
+const OKRE=new RegExp('\\b'+OKW+'\\b');
+const SECS=[['paciente',/\b(preparar (o )?)?paciente\b/,'Preparar o paciente'],['equipamento',/\b(preparar (o )?)?(equipamento|material)\b/,'Preparar o equipamento'],
+  ['time',/\b(preparar (o )?)?(time|equipe)\b/,'Preparar o time'],['dificuldades',/\b(preparar (as )?)?(dificuldades|planos)\b/,'Preparar dificuldades'],
+  ['walls',/\b(avaliacao preditiva( de dificuldades?)?|preditores( de dificuldade)?|avaliacao de dificuldade)\b/,'Avaliação preditiva de dificuldade (todos os itens)']];
+const WG=[['LEMON',/\b(lemon|lemom|limon|le mon)\b/],['ROMAN',/\b(roman|romam|ro man)\b/],['RODS',/\b(rods|rodes|rodis|hods)\b/],['SMART',/\b(smart|esmart|smarte)\b/],['CRASH',/\b(crash|crashi|cresh|crach)\b/]];
+/* [regex, chaves, precisa de palavra de "ok" perto?, vale mesmo negado?] */
+const CKR=[
+  [/\b(acesso venoso|acesso periferico|acesso central|cateter venoso|intraosseo|avp|jelco|acesso (pego|garantido))\b/,['paciente.0.head']],
+  [/\bposica?o (otimizada|ok)|\bposicionamento\b|\brampa\b/,['paciente.1.head']],
+  [/\bcoxi(m|ns)\b/,['paciente.1.0']],
+  [/\b(leito|cama|maca)\b/,['paciente.1.1'],1],
+  [/\bespaco (para (a )?)?(equipe|time)\b/,['paciente.1.2']],
+  [/\bacesso a via aerea\b/,['paciente.2.head']],
+  [/\b(protese|proteses|dentadura|empecilho\w*)\b/,['paciente.2.0'],0,1],
+  [/\b(membrana cricotireoidea|membrana crico\w*|cricotireoidea)\b/,['paciente.2.1']],
+  [/\botimizar (a )?preoxigenacao\b/,['paciente.3.head']],
+  [/\bpreoxigen\w*/,['paciente.3.0']],
+  [/\b(oximetria|oximetro)\b/,['paciente.3.1','equipamento.0.2']],
+  [/\b(oxigenacao apneica|apneica|cateter nasal)\b/,['paciente.3.b0']],
+  [/\bestado do paciente\b/,['paciente.4.head']],
+  [/\b(volemia|expansao volemica)\b/,['paciente.4.0']],
+  [/\b(vasopressor\w*|inotropico\w*|noradrenalina|nora|droga vasoativa|drogas vasoativas|dva|push dose)\b/,['paciente.4.0','equipamento.2.2'],1],
+  [/\b(aspiracao|aspirador)\b/,['paciente.4.1','equipamento.1.3'],1],
+  [/\b(alergia\w*|alergic\w*|potassio|hipercalemia|calemia)\b/,['paciente.5.head'],0,1],
+  [/\b(monitorizad\w*|monitorizacao|monitorei|monitor)\b/,['equipamento.0.head']],
+  [/\b(pani|manguito|pa nao invasiva)\b/,['equipamento.0.0']],
+  [/\b(cardioscopio|cardioscopia|eletrodos|cardioscop\w*)\b/,['equipamento.0.1']],
+  [/\b(capnografo|capnografia|capno|etco2|capnometria)\b/,['equipamento.0.3']],
+  [/\bchecar (o )?equipamento\b/,['equipamento.1.head']],
+  [/\b(cuff|tubo (com|testado|checado))\b/,['equipamento.1.0']],
+  [/\b(fioguia|bougie|bugi|buji|bougi|mandril)\b/,['equipamento.1.1']],
+  [/\b(laringoscopio|lamina)\b/,['equipamento.1.2']],
+  [/\b(guedel|canula orofaringea)\b/,['equipamento.1.4']],
+  [/\bventilador\b/,['equipamento.1.5']],
+  [/\b(dbvm|ambu|bvm|bolsa valvula( mascara)?)\b/,['equipamento.1.6'],1],
+  [/\b(kit (de )?crico\w*|bisturi|material de (via aerea cirurgica|crico\w*))\b/,['equipamento.1.7']],
+  [/\bchecar (as )?drogas\b|\bdrogas (ok|preparadas|prontas|checadas|separadas)\b/,['equipamento.2.head']],
+  [/\bconsiderar (a )?cetamina\b/,['equipamento.2.0']],
+  [/\b(relaxante( muscular)?|bloqueador( neuromuscular)?)\b/,['equipamento.2.1'],1],
+  [/\bsedacao (preparada|pronta|separada|ok)\b|\bbomba de sedacao\b/,['equipamento.2.3']],
+  [/\bdentro da sala\b/,['time.0.head']],
+  [/\b(lider|intubador\w*)\b/,['time.0.0']],
+  [/\b(fisioterapeut\w*|fisio)\b/,['time.0.1']],
+  [/\b(enfermeir\w*|enfermagem)\b/,['time.0.2']],
+  [/\b(circulante|corredor)\b/,['time.1.0']],
+  [/\b(medico 2|segundo medico|outro medico)\b/,['time.1.1']],
+  [/\b(verbaliz\w*|plano (de intubacao )?(dito|falado)|falei o plano)\b/,['dificuldades.0.head']],
+  [/\bplanos? a,? b,? e c\b|\bplanos (ok|definidos|falados)\b/,['dificuldades.1.head','dificuldades.2.head','dificuldades.3.head']],
+  [/\bplano a\b/,['dificuldades.1.head']],
+  [/\bplano b\b/,['dificuldades.2.head']],
+  [/\bplano c\b/,['dificuldades.3.head']],
+  [/\b(supraglotico|mascara laringea)\b/,['dificuldades.2.head'],1],
+];
+function ckName(k){
+  const p=k.split('.'); const sec=CHK.find(s=>s.id===p[0]); if(!sec) return k; const g=sec.groups[+p[1]]; if(!g) return k;
+  if(p[2]==='head') return g.head+(g.items&&g.items.length?' (grupo)':'');
+  if(p[2][0]==='b') return g.items2[+p[2].slice(1)].t;
+  return g.items[+p[2]].t;
+}
+function ckGroup(k){ const p=k.split('.'); const g=CHK.find(s=>s.id===p[0]).groups[+p[1]]; return g.head; }
+function okNear(t,i,j){ return OKRE.test(t.slice(j,j+28))||new RegExp('\\b(testei|chequei|conferi|separei|preparei|garanti)\\b').test(t.slice(Math.max(0,i-22),i)); }
+function parseCk(t,add){
+  const done=new Set(), secs=[];
+  if(/\bchecklist (todo |inteiro |completo|ok|feito|pronto)|\b(tudo|todo o checklist) (ok|pronto|checado|feito)\b/.test(t)) secs.push('paciente','equipamento','time','dificuldades');
+  SECS.forEach(([id,re])=>{ hitPos(t,re).forEach(h=>{ if(!h.neg&&okNear(t,h.i,h.i+h.m[0].length)&&!secs.includes(id)) secs.push(id); }); });
+  if(!secs.includes('walls')) WG.forEach(([k,re])=>{ if(hitPos(t,re).some(h=>!h.neg&&okNear(t,h.i,h.i+h.m[0].length))){ add({tab:'Checklist',l:'Walls · grupo',v:k+' · '+(CHK.find(s=>s.id==='dificuldades').groups.find(g=>g.key===k)||{}).name+' (todos)',ck:{grp:k}}); } });
+  secs.forEach(id=>{ done.add(id); add({tab:'Checklist',l:'Seção inteira',v:SECS.find(s=>s[0]===id)[2],ck:{sec:id}}); });
+  CKR.forEach(([re,keys,needOk,negOk])=>{
+    const hs=hitPos(t,re).filter(h=>(negOk||!h.neg)&&(!needOk||okNear(t,h.i,h.i+h.m[0].length)));
+    if(!hs.length) return;
+    keys.forEach(k=>{ const sid=k.split('.')[0]; if(done.has(sid)||done.has(k)) return; const gk=k.split('.').slice(0,2).join('.')+'.head'; if(done.has(gk)) return;
+      done.add(k); add({tab:'Checklist',l:k.endsWith('.head')?'Grupo':ckGroup(k),v:ckName(k),ck:{key:k}}); });
+  });
+}
+function ckApply(ck){
+  let els=[];
+  if(ck.grp){ const h=document.querySelector(`.ghead[data-info="${ck.grp}"]`); if(!h) return null; const lis=[...h.closest('.group').querySelectorAll('li.item[data-key]')]; lis.forEach(x=>{ state[x.dataset.key]=true; x.classList.add('checked'); }); return h; }
+  if(ck.sec){ const p=document.getElementById('ckpane-'+ck.sec); if(!p) return null; els=[...p.querySelectorAll('li.item[data-key],.ghead[data-head]')]; }
+  else if(ck.key.endsWith('.head')){ const h=document.querySelector(`.ghead[data-head="${ck.key}"]`); if(!h) return null; els=[h,...h.closest('.group').querySelectorAll('li.item[data-key]')]; }
+  else{ const li=document.querySelector(`li.item[data-key="${ck.key}"]`); if(!li) return null; els=[li]; }
+  els.forEach(x=>{ const k=x.dataset.key||x.dataset.head; state[k]=true; x.classList.add('checked'); });
+  try{ _ckTouched=true; }catch(e){}
+  if(ck.sec){ const p=document.getElementById('ckpane-'+ck.sec); return p.querySelector('.ck-sh'); }
+  return els[0];
+}
+function ckAlready(ck){
+  if(ck.grp){ const h=document.querySelector(`.ghead[data-info="${ck.grp}"]`); return !!h&&[...h.closest('.group').querySelectorAll('li.item[data-key]')].every(x=>state[x.dataset.key]); }
+  if(ck.sec){ const p=document.getElementById('ckpane-'+ck.sec); return p&&[...p.querySelectorAll('li.item[data-key],.ghead[data-head]')].every(x=>state[x.dataset.key||x.dataset.head]); }
+  return !!state[ck.key];
+}
+
+/* ---------------- aplicar no formulário ---------------- */
+const $=id=>document.getElementById(id);
+function curOf(it){
+  if(it.ck) return '';
+  if(it.f){ const el=$(it.f); if(!el||!el.value) return ''; return el.tagName==='SELECT'?(el.selectedOptions[0]||{}).text:el.value; }
+  if(it.chip&&it.chip[0]!=='adv'){ const c=document.querySelector(`.chip.sel[data-grp="${it.chip[0]}"]`); return c&&c.dataset.v!==it.chip[1]?c.dataset.v:''; }
+  if(it.pick){ const lab=typeof pickLabel==='function'?pickLabel(it.pick[0]):''; return lab&&lab!==it.pick[1]?lab:''; }
+  return '';
+}
+function shown(it){ return it.show||it.v||(it.chip&&it.chip[1])||(it.pick&&it.pick[1])||it.adv; }
+function applyItem(it){
+  let el=null;
+  if(it.f){ el=$(it.f); if(!el) return null; el.value=it.v; if(it.f==='f_setor'&&el.value!==it.v){ [...el.options].forEach(o=>{ if(o.text===it.v) el.value=o.value; }); }
+    el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));
+    return el; }
+  if(it.chip){ const [g,val]=it.chip; const c=document.querySelector(`.chip[data-grp="${g}"][data-v="${val}"]`); if(!c) return null;
+    c.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x===c));
+    if(g==='advhas'){ const ab=$('advBox'); if(ab) ab.style.display=val==='Sim'?'block':'none'; }
+    return c; }
+  if(it.adv){ const c=[...document.querySelectorAll('.chip[data-grp="adv"]')].find(x=>x.dataset.v.indexOf(it.adv)===0); if(!c) return null; c.classList.add('sel'); return c; }
+  if(it.ck) return ckApply(it.ck);
+  if(it.pick){ const [pk,lab]=it.pick; const opt=[...document.querySelectorAll(`.popt[data-pick="${pk}"]`)].find(o=>o.dataset.label===lab); if(!opt) return null;
+    state[pk]=+opt.dataset.idx; opt.parentElement.querySelectorAll('.popt').forEach(b=>b.classList.toggle('sel',b===opt));
+    const on=$('on-'+pk); if(on) on.textContent='· '+lab; return opt; }
+  return null;
+}
+function clearHL(){ document.querySelectorAll('.vz-hl').forEach(e=>e.classList.remove('vz-hl')); document.querySelectorAll('.vz-banner').forEach(b=>b.classList.remove('show')); }
+function applyAll(items){
+  clearHL(); const tabs=new Set(); let n=0;
+  items.forEach(it=>{ const el=applyItem(it); if(el){ el.classList.add('vz-hl'); tabs.add(it.tab); n++; } });
+  try{ update(); renderDoseSug(); renderInfusion(); if(typeof calcPBW==='function') calcPBW(); queueLive(); }catch(e){}
+  ['registro','checklist','pos'].forEach(id=>{ const p=$('panel-'+id); if(!p) return; let b=p.querySelector('.vz-banner');
+    if(!b){ b=document.createElement('div'); b.className='vz-banner'; b.innerHTML='<span></span><button type="button">Ok, conferido</button>'; p.prepend(b); b.querySelector('button').onclick=clearHL; }
+    const cnt=p.querySelectorAll('.vz-hl').length; if(cnt){ b.querySelector('span').innerHTML=`🎙 <b>${cnt}</b> campo${cnt>1?'s':''} preenchido${cnt>1?'s':''} por voz nesta tela — confira os destacados.`; b.classList.add('show'); } });
+  toast(`🎙 ${n} campos preenchidos · ${[...tabs].join(', ')}`);
+  const first=['Registro','Checklist','Pós-IOT'].find(x=>tabs.has(x)); const idx=TABS.findIndex(tb=>tb.label===first);
+  if(idx>=0&&TABS[active].label!==first&&!tabs.has(TABS[active].label)) selectTab(idx);
+}
+document.addEventListener('input',e=>{ const h=e.target.closest&&e.target.closest('.vz-hl'); if(h) h.classList.remove('vz-hl'); },true);
+
+/* ---------------- interface ---------------- */
+const ov=$('vzOv'), sh=$('vzSheet'), fab=$('vzFab');
+let rec=null, recording=false, finalTxt='', t0=0, tick=null, items=[];
+const mm=s=>String(Math.floor(s/60)).padStart(1,'0')+':'+String(s%60).padStart(2,'0');
+function close(){ stopRec(true); ov.classList.remove('show'); }
+ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+
+function openRec(){
+  finalTxt=''; ov.classList.add('show');
+  sh.innerHTML=`<div class="vz-top"><h3>🎙 Registro por voz</h3><button class="vz-x" data-vz="close">×</button></div>
+   ${SR?'':'<div class="vz-warn">Este navegador não tem reconhecimento de voz (use o Chrome no celular). Para testar aqui, toque num exemplo ou digite o texto.</div>'}
+   <div class="vz-rec"><span class="vz-dot" id="vzDot" style="${SR?'':'display:none'}"></span><span class="vz-time" id="vzTime">${SR?'0:00':'—'}</span>
+     <div class="vz-wave${SR?'':' idle'}" id="vzWave">${Array.from({length:22},(_,i)=>`<i style="animation-delay:${(i*73%900)/1000}s"></i>`).join('')}</div></div>
+   <textarea class="vz-txt" id="vzTxt" placeholder="${SR?'Fale normalmente… o texto aparece aqui':'Digite ou escolha um exemplo'}"></textarea>
+   <div class="vz-interim" id="vzInt"></div>
+   <div class="vz-tip">Conte o caso como passaria para um colega: <b>sexo, idade, peso, indicação, sinais vitais, drogas, técnica, guia, tubo, tentativa, eventos e desfecho</b>. No checklist, fale os itens (“acesso venoso”, “capnografia”, “fisioterapeuta”) ou a seção inteira (“preparar paciente ok”). Não diga o nome do paciente — use iniciais ou nº de atendimento.</div>
+   <div class="vz-ex">${EXAMPLES.map((x,i)=>`<button data-vz="ex" data-i="${i}">Exemplo: ${x[0]}</button>`).join('')}</div>
+   <div class="vz-btns"><button class="vz-b2" data-vz="close">Cancelar</button><button class="vz-b1 ${SR?'vz-stop':''}" data-vz="done" id="vzDone">${SR?'■ Concluir':'Analisar texto'}</button></div>`;
+  if(SR) startRec();
+}
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let baseTxt='', curTxt='', endWait=null;
+let nSess=0, gotRes=false, wd=null;
+/* iPhone: tocar um áudio mudo no toque "reinicia" a sessão de áudio do Safari */
+let _sil=null;
+function silentWav(){ const n=800,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,8000,true); v.setUint32(28,16000,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
+function unlockAudio(){ try{ if(!_sil) _sil=new Audio(silentWav()); _sil.currentTime=0; const p=_sil.play(); if(p&&p.then) p.then(()=>{ try{ _sil.pause(); }catch(e){} }).catch(()=>{}); }catch(e){} }
+function armWatchdog(){ clearTimeout(wd); if(!IOS||nSess<2) return;
+  wd=setTimeout(()=>{ if(recording&&!gotRes&&!(($('vzTxt')||{}).value||'').trim()){
+    const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.innerHTML='⚠ O iPhone travou o reconhecimento de voz (falha conhecida do Safari a partir da 2ª gravação). <button data-vz="reload" style="margin-top:8px;display:block;width:100%;border:none;border-radius:10px;padding:11px;background:#03529D;color:#fff;font:800 14px var(--display);cursor:pointer">↻ Reiniciar microfone</button><span style="font-size:12px">O que já foi preenchido fica salvo.</span>'; } } },6000); }
+function stat(m){ const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.textContent=m; } }
+function showTxt(){ const ta=$('vzTxt'); if(ta){ ta.value=(baseTxt+' '+curTxt).trim(); ta.scrollTop=ta.scrollHeight; } }
+function mkRec(){
+  const r=new SR(); r.lang='pt-BR'; r.continuous=true; r.interimResults=true;
+  r.onresult=ev=>{ if(r!==rec) return; gotRes=true; clearTimeout(wd); curTxt=Array.from(ev.results).map(x=>x[0].transcript.trim()).join(' '); showTxt(); stat(''); };
+  r.onstart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); };
+  r.onaudiostart=()=>{ if(r!==rec) return; stat('🎧 ouvindo… pode falar'); armWatchdog(); };
+  r.onspeechstart=()=>{ if(r!==rec) return; stat('🗣 captando sua voz…'); };
+  r.onerror=ev=>{ if(r!==rec) return;
+    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ recording=false; setIdle('Microfone ou reconhecimento de voz bloqueado. No iPhone: Ajustes → Safari → Microfone = Permitir, e Ajustes → Tempo de Uso/Privacidade → Reconhecimento de Fala = ativado para o Safari.'); return; }
+    if(ev.error!=='no-speech'&&ev.error!=='aborted') stat('⚠ reconhecimento: '+ev.error); };
+  r.onend=()=>{ if(r!==rec) return;
+    if(curTxt){ baseTxt=(baseTxt+' '+curTxt).trim(); curTxt=''; showTxt(); }
+    if(recording){ setTimeout(()=>{ if(recording&&r===rec){ try{ r.start(); }catch(e){} } },120); }
+    else if(endWait){ const f=endWait; endWait=null; f(); } };
+  return r;
+}
+function killRec(){ clearTimeout(wd); if(rec){ const old=rec; rec=null; try{ old.onresult=old.onend=old.onerror=null; old.abort(); }catch(e){} } }
+function startRec(){
+  baseTxt=''; curTxt=''; recording=false; gotRes=false; nSess++; if(IOS) unlockAudio(); const had=!!rec; killRec();
+  const go=()=>{ try{
+      rec=mkRec(); recording=true; rec.start(); t0=Date.now(); clearInterval(tick); armWatchdog();
+      tick=setInterval(()=>{ const e=$('vzTime'); if(e) e.textContent=mm(Math.floor((Date.now()-t0)/1000)); },500);
+      if(navigator.vibrate) navigator.vibrate(30);
+    }catch(e){ setIdle('Não foi possível iniciar o microfone. Digite ou use um exemplo.'); } };
+  if(had) setTimeout(go,350); else go();   /* o iPhone precisa liberar o microfone da gravação anterior */
+}
+/* para e espera o texto final chegar (no iPhone ele chega depois do stop) */
+function stopRecWait(){ return new Promise(res=>{ if(!rec||!recording){ res(); return; } recording=false; clearInterval(tick); endWait=res; try{ rec.stop(); }catch(e){ endWait=null; res(); } setTimeout(()=>{ if(endWait){ endWait=null; res(); } },1500); }); }
+function setIdle(msg){ clearInterval(tick); const w=$('vzWave'); if(w) w.classList.add('idle'); const d=$('vzDot'); if(d) d.style.display='none';
+  const b=$('vzDone'); if(b){ b.classList.remove('vz-stop'); b.textContent='Analisar texto'; }
+  if(msg){ const it=$('vzInt'); if(it){ it.style.fontStyle='normal'; it.textContent=msg; } } }
+function stopRec(silent){ recording=false; killRec(); clearInterval(tick); if(!silent) setIdle(); }
+
+function typeExample(i){
+  stopRec(); const ta=$('vzTxt'), s=EXAMPLES[i][1]; let k=0; ta.value='';
+  const w=$('vzWave'); if(w) w.classList.remove('idle');
+  const iv=setInterval(()=>{ k+=4; ta.value=s.slice(0,k); ta.scrollTop=ta.scrollHeight; if(k>=s.length){ clearInterval(iv); if(w) w.classList.add('idle'); } },18);
+}
+function review(){
+  const txt=($('vzTxt').value||'').trim(); stopRec(true);
+  if(!txt){ toast('Nada foi falado ainda'); return; }
+  items=parse(txt);
+  const groups=['Registro','Checklist','Pós-IOT'];
+  let html=`<div class="vz-top"><h3>Confira antes de preencher</h3><button class="vz-x" data-vz="close">×</button></div>`;
+  if(!items.length) html+=`<div class="vz-none">Não identifiquei nenhum campo nesse áudio.<br>Tente falar os termos do formulário (ex.: “cetamina”, “bougie”, “primeira tentativa”).</div>`;
+  else{ html+=`<div class="vz-tip" style="margin-top:0"><b>${items.length} informações</b> encontradas. Desmarque o que estiver errado — você ainda pode editar tudo no formulário.</div>`;
+    groups.forEach(g=>{ const its=items.map((x,i)=>[x,i]).filter(([x])=>x.tab===g); if(!its.length) return;
+      html+=`<div class="vz-grp">${g}</div>`+its.map(([x,i])=>{ const old=curOf(x);
+        return `<label class="vz-row"><input type="checkbox" checked data-vzi="${i}"><span class="l">${x.l}</span><span class="v">${shown(x)}${x.inf?`<span class="inf">${x.inf}</span>`:''}${x.ck&&ckAlready(x.ck)?'<span class="inf">já marcado</span>':''}${old?`<span class="old">atual: ${old}</span>`:''}</span></label>`; }).join(''); }); }
+  html+=`<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--muted);font-size:13px;font-weight:700">Texto transcrito</summary><div class="vz-tip" style="font-size:13.5px;color:var(--ink)">${txt.replace(/</g,'&lt;')}</div></details>
+    <div class="vz-btns"><button class="vz-b2" data-vz="again">🎙 Regravar</button>${items.length?'<button class="vz-b1" data-vz="apply">Preencher formulário</button>':''}</div>`;
+  sh.innerHTML=html; sh.scrollTop=0;
+}
+sh.addEventListener('change',e=>{ if(e.target.dataset.vzi!==undefined) e.target.closest('.vz-row').classList.toggle('off',!e.target.checked); });
+sh.addEventListener('click',e=>{
+  const b=e.target.closest('[data-vz]'); if(!b) return; const a=b.dataset.vz;
+  if(a==='close') close();
+  if(a==='ex') typeExample(+b.dataset.i);
+  if(a==='done'){ if(recording){ stopRecWait().then(()=>{ if(curTxt){ baseTxt=(baseTxt+' '+curTxt).trim(); curTxt=''; showTxt(); } killRec(); setIdle(); review(); }); } else review(); }
+  if(a==='again') openRec();
+  if(a==='reload'){ try{ saveLive(); sessionStorage.setItem('omni_vz_resume',(TABS[active]||{}).id||'registro'); }catch(e){} location.reload(); }
+  if(a==='apply'){ const sel=[...sh.querySelectorAll('[data-vzi]')].filter(x=>x.checked).map(x=>items[+x.dataset.vzi]); ov.classList.remove('show'); applyAll(sel); }
+});
+fab.addEventListener('click',openRec);
+
+/* mostra o botão só nas telas de formulário */
+function syncFab(){ const id=(TABS[active]||{}).id; fab.classList.toggle('show',FAB_TABS.includes(id)); }
+const _sel=window.selectTab; if(typeof _sel==='function'){ window.selectTab=function(i){ const r=_sel.apply(this,arguments); syncFab(); return r; }; selectTab=window.selectTab; }
+setInterval(syncFab,600); syncFab();
+window.OmniVoz={parse,EXAMPLES};
+(function resume(){ let tab=null; try{ tab=sessionStorage.getItem('omni_vz_resume'); sessionStorage.removeItem('omni_vz_resume'); }catch(e){}
+  if(!tab) return;
+  try{ const empty=!['f_nome','f_idade','f_preal','vi_pa'].some(id=>($(id)||{}).value)&&!Object.keys(state).some(k=>state[k]); if(empty&&typeof restoreLive==='function') restoreLive(); }catch(e){}
+  setTimeout(()=>{
+    const i=TABS.findIndex(t=>t.id===tab); if(i>=0) selectTab(i);
+    ov.classList.add('show'); sh.innerHTML=`<div class="vz-top"><h3>🎙 Microfone reiniciado</h3><button class="vz-x" data-vz="close">×</button></div><div class="vz-tip">Tudo o que você já tinha preenchido continua aqui. Toque para gravar de novo.</div><div class="vz-btns"><button class="vz-b2" data-vz="close">Agora não</button><button class="vz-b1" data-vz="again">🎙 Gravar</button></div>`; },900); })();
+})();
+</script>
+<!-- ===== fim registro por voz ===== -->
 </body>
 </html>

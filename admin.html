@@ -242,7 +242,7 @@ function errPt(e){ const m=String((e&&e.message)||e||'');
   if(/rate limit|too many/i.test(m)) return 'Muitas tentativas seguidas. Aguarde alguns minutos.';
   if(/failed to fetch|network/i.test(m)) return 'Sem conexão com o servidor.';
   return m||'Erro inesperado.'; }
-const EV={login:'Entrou',cadastro:'Criou a conta',app_aberto:'Abriu o app',registro_salvo:'Salvou um registro',registro_excluido:'Excluiu um registro',checklist_completo:'Completou o checklist',logout:'Saiu'};
+const EV={login:'Entrou',cadastro:'Criou a conta',app_aberto:'Abriu o app',registro_salvo:'Salvou um registro',registro_excluido:'Excluiu um registro',checklist_completo:'Completou o checklist',logout:'Saiu',voz:'Usou o registro por voz'};
 const SITE=location.origin+location.pathname.replace(/admin\.html$/,'');
 const UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 
