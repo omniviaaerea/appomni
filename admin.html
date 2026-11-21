@@ -247,7 +247,7 @@ const SITE=location.origin+location.pathname.replace(/admin\.html$/,'');
 const UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 
 let ME=null, P=[], R=[], E=[], RES={}, tab='geral';
-const pName=id=>{ const p=P.find(x=>x.id===id); return p?(p.nome||p.email):'—'; };
+const pName=id=>{ if(!id) return 'Conta excluída'; const p=P.find(x=>x.id===id); return p?(p.nome||p.email):'—'; };
 
 /* ---------- login ---------- */
 async function login(){

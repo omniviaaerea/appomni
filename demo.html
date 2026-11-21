@@ -736,7 +736,7 @@ async function doForgot(e){
   if(!email) return gateErr('lgErr','Digite o seu e-mail acima e toque de novo em "Esqueci minha senha".');
   if(!needCloud('lgErr')) return;
   try{
-    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())?(CFG.webUrl||'https://omniviaaerea.github.io/appomni/'):location.origin+location.pathname});
     if(error) return gateErr('lgErr',errPt(error));
     gateErr('lgErr','Enviamos um link para o seu e-mail. Abra-o para criar uma nova senha.',true);
   }catch(err){ gateErr('lgErr',errPt(err)); }
@@ -1940,7 +1940,7 @@ let BLOG=[
 
 function renderOmni(){
   const ac=document.getElementById('omniAcct');
-  if(ac){ const u=(currentUser&&Profile.get())||{}; ac.innerHTML = currentUser?`<div class="acct"><div class="who">Logado como <b>${esc(u.nome||currentUser)}</b>${u.crm?` · CRM ${esc(u.crm)}${u.uf?'/'+esc(u.uf):''}`:''}</div><button id="logoutBtn">Sair</button></div>${u.role==='admin'?`<a class="admin-link" href="admin.html">📊 Painel administrativo<small>registros, histórico de uso e usuários</small><span>›</span></a>`:''}`:''; const lb=document.getElementById('logoutBtn'); if(lb) lb.onclick=logout; }
+  if(ac){ const u=(currentUser&&Profile.get())||{}; ac.innerHTML = currentUser?`<div class="acct"><div class="who">Logado como <b>${esc(u.nome||currentUser)}</b>${u.crm?` · CRM ${esc(u.crm)}${u.uf?'/'+esc(u.uf):''}`:''}</div><button id="logoutBtn">Sair</button></div>${u.role==='admin'?`<a class="admin-link" href="admin.html">📊 Painel administrativo<small>registros, histórico de uso e usuários</small><span>›</span></a>`:''}<div class="acct-links"><a href="privacidade.html">Política de privacidade</a><a href="suporte.html">Suporte</a><button id="delAcctBtn" type="button">Excluir minha conta</button></div>`:''; const lb=document.getElementById('logoutBtn'); if(lb) lb.onclick=logout; const db_=document.getElementById('delAcctBtn'); if(db_) db_.onclick=()=>window.openDelAcct&&openDelAcct(); }
   const ob=document.getElementById('onboard');
   if(ob){ let done=false; try{ done=!!localStorage.getItem('omni_onboard_done'); }catch(e){}
     ob.innerHTML = done?'':'<div class="aviso"><span class="ic">🚀</span><div><b>Comece assim:</b> 1) preencha o <b>Registro</b> do paciente · 2) rode o <b>Checklist</b> em voz alta com o time · 3) salve no <b>Pós-IOT</b> e acompanhe sua <b>Evolução</b>. <a href="#" id="onboardOk" style="color:var(--teal-deep);font-weight:800;text-decoration:none;white-space:nowrap">Entendi ✓</a></div></div>'; }
@@ -2105,7 +2105,7 @@ loadOmniFeed();
 (function(){ const h=(location.hash||'').slice(1); const i=TABS.findIndex(t=>t.id===h); if(i>0&&currentUser) selectTab(i); else updateBnav(TABS[0].id); })();
 
 /* ---------- PWA ---------- */
-if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
+if('serviceWorker' in navigator&&!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
   reg.addEventListener('updatefound',()=>{ const nw=reg.installing; if(nw) nw.addEventListener('statechange',()=>{ if(nw.state==='installed'&&navigator.serviceWorker.controller) toast('Nova versão disponível — feche e reabra o app'); }); });
 }).catch(()=>{})); }
 let deferredPrompt=null;
@@ -2116,7 +2116,7 @@ window.addEventListener('appinstalled',()=>{ const w=document.getElementById('in
   if(btn) btn.onclick=async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; const w=document.getElementById('installWrap'); if(w) w.style.display='none'; } };
   const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
   const standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
-  if(isiOS&&!standalone){ const h=document.getElementById('iosHint'); if(h) h.style.display='flex'; }
+  if(isiOS&&!standalone&&!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())){ const h=document.getElementById('iosHint'); if(h) h.style.display='flex'; }
 })();
 </script>
 <script>/* DEMO: sem login e sem servidor. Para ver a tela de login, abra com #login no fim do endereço */
@@ -2145,6 +2145,68 @@ window.addEventListener('appinstalled',()=>{ const w=document.getElementById('in
   });
 })();
 </script>
+<!-- ===== OMNI · Excluir minha conta ===== -->
+<style id="delcss">
+.acct-links{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin:-6px 2px 16px;font-size:12.5px}
+.acct-links a{color:var(--muted);font-weight:700;text-decoration:none}
+.acct-links button{border:none;background:none;padding:0;color:#C0262D;font:700 12.5px var(--display);cursor:pointer}
+.del-ov{position:fixed;inset:0;z-index:210;background:rgba(2,20,40,.6);display:none;align-items:center;justify-content:center;padding:18px}
+.del-ov.show{display:flex}
+.del-card{width:100%;max-width:420px;background:var(--card);color:var(--ink);border-radius:18px;padding:20px;font-family:var(--display);box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.del-card h3{margin:0 0 10px;font-size:18px;font-weight:800;color:#C0262D}
+.del-card ul{margin:8px 0 12px;padding-left:18px;font-size:13.5px;line-height:1.5}
+.del-card p{font-size:13.5px;line-height:1.5;margin:8px 0}
+.del-card input{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font:700 15px var(--display);letter-spacing:.08em;color:var(--ink);background:var(--card);margin-top:4px}
+.del-btns{display:flex;gap:10px;margin-top:14px}
+.del-btns button{flex:1;border:none;border-radius:11px;padding:12px;font:800 14px var(--display);cursor:pointer}
+.del-no{background:var(--bg);color:var(--ink)}
+.del-yes{background:#C0262D;color:#fff}.del-yes:disabled{opacity:.4;cursor:default}
+.del-err{color:#C0262D;font-size:13px;font-weight:700;min-height:18px;margin-top:8px}
+</style>
+<div class="del-ov" id="delOv"><div class="del-card" role="dialog" aria-modal="true" aria-labelledby="delT">
+  <h3 id="delT">Excluir minha conta</h3>
+  <p>Esta ação é <b>definitiva</b>. Ao excluir:</p>
+  <ul>
+    <li>seu login, nome, CRM, e-mail e histórico de uso são <b>apagados</b>;</li>
+    <li>as intubações que você registrou continuam na base da OMNI <b>de forma anônima</b>, sem nenhuma ligação com você;</li>
+    <li>os dados salvos neste aparelho são apagados.</li>
+  </ul>
+  <p>Para confirmar, digite <b>EXCLUIR</b>:</p>
+  <input id="delInp" autocomplete="off" autocapitalize="characters" placeholder="EXCLUIR">
+  <div class="del-err" id="delErr"></div>
+  <div class="del-btns"><button class="del-no" id="delNo">Cancelar</button><button class="del-yes" id="delYes" disabled>Excluir conta</button></div>
+</div></div>
+<script>
+(function(){
+  const $=id=>document.getElementById(id), ov=$('delOv'), inp=$('delInp'), yes=$('delYes'), err=$('delErr');
+  function open(){ inp.value=''; yes.disabled=true; err.textContent=''; ov.classList.add('show'); setTimeout(()=>inp.focus(),50); }
+  function close(){ ov.classList.remove('show'); }
+  window.openDelAcct=open;
+  inp.addEventListener('input',()=>{ yes.disabled=inp.value.trim().toUpperCase()!=='EXCLUIR'; });
+  $('delNo').onclick=close; ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+  yes.onclick=async()=>{
+    if(!navigator.onLine){ err.textContent='Sem internet. Conecte-se para excluir a conta.'; return; }
+    if(!sb){ err.textContent='Servidor indisponível.'; return; }
+    yes.disabled=true; yes.textContent='Excluindo…'; err.textContent='';
+    try{
+      const {error}=await sb.rpc('delete_my_account');
+      if(error){ err.textContent=error.message||'Não foi possível excluir.'; yes.disabled=false; yes.textContent='Excluir conta'; return; }
+      const who=currentUser;
+      try{ Object.keys(localStorage).forEach(k=>{ if((who&&k.endsWith('__'+who))||k==='omni_profile'||k==='omni_ck_collapsed') localStorage.removeItem(k); }); }catch(e){}
+      loggingOut=true;
+      try{ await sb.auth.signOut({scope:'local'}); }catch(e){}
+      try{ localStorage.removeItem(SB_KEY); }catch(e){}
+      loggingOut=false; currentUser=null; myUid=null; Profile.set({});
+      try{ clearScreen(); }catch(e){}
+      close(); yes.textContent='Excluir conta';
+      const g=$('gate'); if(g) g.classList.remove('hidden');
+      try{ showForm('formLogin'); }catch(e){}
+      toast('Conta excluída. Obrigado por usar o OMNI Via Aérea.');
+    }catch(e){ err.textContent='Falha de conexão. Tente de novo.'; yes.disabled=false; yes.textContent='Excluir conta'; }
+  };
+})();
+</script>
+<!-- ===== fim excluir conta ===== -->
 <!-- ===== OMNI · Registro por voz ===== -->
 <style id="vzcss">
 .vz-fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:70;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;
